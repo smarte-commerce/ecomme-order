@@ -11,14 +11,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateExternalRefRequest {
-    @NotBlank(message = "Service name is required")
-    private String serviceName;
-    
-    @NotBlank(message = "External ID is required")
-    private String externalId;
-    
-    @NotBlank(message = "Reference type is required")
-    private String refType;
-    
-    private String status;
-} 
+  @NotBlank(message = "Service name is required")
+  private String serviceName;
+
+  @NotBlank(message = "External ID is required")
+  private String externalId;
+
+  @NotBlank(message = "Reference type is required")
+  private String refType;
+
+  private String status;
+}
