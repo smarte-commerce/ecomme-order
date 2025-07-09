@@ -144,6 +144,12 @@
 			<artifactId>caffeine</artifactId>
 		</dependency>
 
+		<!-- Kafka -->
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+		</dependency>
+
 		<!-- Resilience4j -->
 		<dependency>
 			<groupId>io.github.resilience4j</groupId>
