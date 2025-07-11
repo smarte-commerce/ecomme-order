@@ -16,14 +16,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderDiscountResponse {
-    private UUID id;
-    private UUID orderId;
-    private String discountCode;
-    private String discountName;
-    private DiscountType discountType;
-    private Double discountValue;
-    private Double discountAmount;
-    private DiscountAppliesTo appliesTo;
-    private Instant createdDate;
-    private Instant updatedDate;
-} 
+  private UUID id;
+  private UUID orderId;
+  private String discountCode;
+  private String discountName;
+  private DiscountType discountType;
+  private Double discountValue;
+  private Double discountAmount;
+  private DiscountAppliesTo appliesTo;
+  private Instant createdDate;
+  private Instant updatedDate;
+}

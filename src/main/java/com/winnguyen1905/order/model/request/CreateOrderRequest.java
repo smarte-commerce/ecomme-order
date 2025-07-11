@@ -22,7 +22,7 @@ public class CreateOrderRequest implements AbstractModel {
   private UUID shippingDiscountId;
   private UUID globalProductDiscountId;
 
-  // Customer Infomation
+  // Customer Information
   @NotNull(message = "Shipping address is required")
   private String shippingAddress;
 
@@ -31,6 +31,12 @@ public class CreateOrderRequest implements AbstractModel {
   private LocalDate estimatedDeliveryDate;
 
   private String specialInstructions;
+
+  // Payment Information for SAGA flow
+  @NotNull(message = "Payment method is required")
+  private String paymentMethod;
+
+  private String currency = "USD";
 
   @Data
   @Builder
@@ -51,6 +57,8 @@ public class CreateOrderRequest implements AbstractModel {
     private UUID productId;
 
     private UUID variantId;
+
+    private String productSku;
 
     @NotNull(message = "Quantity is required")
     @Min(value = 1, message = "Quantity must be at least 1")
