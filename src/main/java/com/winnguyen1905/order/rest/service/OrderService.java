@@ -12,6 +12,7 @@ import com.winnguyen1905.order.model.request.CreateOrderRequest;
 import com.winnguyen1905.order.model.response.OrderResponse;
 import com.winnguyen1905.order.model.response.OrderSummaryResponse;
 import com.winnguyen1905.order.common.constant.OrderStatus;
+import com.winnguyen1905.order.secure.TAccountRequest;
 
 /**
  * Service for managing orders
@@ -22,9 +23,10 @@ public interface OrderService {
      * Create a new order
      * 
      * @param request Order creation request
+     * @param accountRequest Account request
      * @return Created order response
-     */
-    OrderResponse createOrder(CreateOrderRequest request);
+     */ 
+    OrderResponse createOrder(CreateOrderRequest request, TAccountRequest accountRequest);
     
     /**
      * Get order by ID
