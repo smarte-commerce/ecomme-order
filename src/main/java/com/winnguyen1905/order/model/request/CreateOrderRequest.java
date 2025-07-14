@@ -23,6 +23,9 @@ public class CreateOrderRequest implements AbstractModel {
   private UUID globalProductDiscountId;
 
   // Customer Information
+  @NotNull(message = "Customer ID is required")
+  private Long customerId;
+
   @NotNull(message = "Shipping address is required")
   private String shippingAddress;
 
@@ -37,6 +40,13 @@ public class CreateOrderRequest implements AbstractModel {
   private String paymentMethod;
 
   private String currency = "USD";
+
+  // Payment tracking fields
+  @Builder.Default
+  private Double paidAmount = 0.0;
+
+  @Builder.Default
+  private Double amountToBePaid = 0.0;
 
   @Data
   @Builder
