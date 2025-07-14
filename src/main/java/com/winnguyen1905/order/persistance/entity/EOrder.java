@@ -42,6 +42,12 @@ public class EOrder extends EBaseAudit {
   @Column(name = "total_amount", nullable = false)
   private Double totalAmount;
 
+  @Column(name = "paid_amount", nullable = false)
+  private Double paidAmount;
+
+  @Column(name = "amount_to_be_paid", nullable = false)
+  private Double amountToBePaid;
+
   @Enumerated(EnumType.STRING)
   @Column(name = "status")
   private OrderStatus status;
