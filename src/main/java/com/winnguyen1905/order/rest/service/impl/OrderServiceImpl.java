@@ -1,5 +1,6 @@
 package com.winnguyen1905.order.rest.service.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -73,6 +74,10 @@ public class OrderServiceImpl implements OrderService {
     order.setTaxAmount(0.0);
     order.setShippingAmount(0.0);
     order.setTotalAmount(0.0);
+
+    // Initialize payment amounts from request
+    order.setPaidAmount(request.getPaidAmount() != null ? request.getPaidAmount() : 0.0);
+    order.setAmountToBePaid(request.getAmountToBePaid() != null ? request.getAmountToBePaid() : 0.0);
 
     // Save order to get ID
     EOrder savedOrder = orderRepository.save(order);
@@ -236,15 +241,69 @@ public class OrderServiceImpl implements OrderService {
   @Override
   @Transactional
   public void deleteOrder(UUID id) {
-    if (!orderRepository.existsById(id)) {
-      throw new EntityNotFoundException("Order not found with id: " + id);
-    }
+    EOrder order = orderRepository.findById(id)
+        .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + id));
 
-    // In a real application, we might want to check if the order can be deleted
-    // and perform cascading delete on related entities
-
-    orderRepository.deleteById(id);
+    orderRepository.delete(order);
     log.info("Deleted order with ID: {}", id);
+  }
+
+  // Payment-related methods implementation
+
+  @Override
+  @Transactional
+  public void updateOrderPaymentAmounts(UUID orderId, BigDecimal paidAmount, BigDecimal amountToBePaid) {
+    EOrder order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
+
+    order.setPaidAmount(paidAmount.doubleValue());
+    order.setAmountToBePaid(amountToBePaid.doubleValue());
+    
+    orderRepository.save(order);
+
+    // Create status history for payment update
+    String reason = String.format("Payment amounts updated - Paid: $%.2f, To be paid: $%.2f", 
+        paidAmount.doubleValue(), amountToBePaid.doubleValue());
+    createStatusHistory(order, order.getStatus(), order.getStatus(), reason);
+
+    log.info("Updated payment amounts for order {}. Paid: {}, To be paid: {}", 
+        orderId, paidAmount, amountToBePaid);
+  }
+
+  @Override
+  @Transactional
+  public void markOrderAsPaid(UUID orderId, BigDecimal paidAmount) {
+    EOrder order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
+
+    order.setPaidAmount(paidAmount.doubleValue());
+    order.setAmountToBePaid(0.0);
+    
+    orderRepository.save(order);
+
+    // Create status history for payment completion
+    String reason = String.format("Order marked as paid - Amount: $%.2f", paidAmount.doubleValue());
+    createStatusHistory(order, order.getStatus(), order.getStatus(), reason);
+
+    log.info("Marked order {} as paid with amount: {}", orderId, paidAmount);
+  }
+
+  @Override
+  @Transactional
+  public void markOrderAsUnpaid(UUID orderId) {
+    EOrder order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
+
+    order.setPaidAmount(0.0);
+    order.setAmountToBePaid(order.getTotalAmount());
+    
+    orderRepository.save(order);
+
+    // Create status history for payment reset
+    String reason = String.format("Order marked as unpaid - Amount to be paid: $%.2f", order.getTotalAmount());
+    createStatusHistory(order, order.getStatus(), order.getStatus(), reason);
+
+    log.info("Marked order {} as unpaid. Amount to be paid: {}", orderId, order.getTotalAmount());
   }
 
   @Override
@@ -642,89 +701,38 @@ public class OrderServiceImpl implements OrderService {
         .oldStatus(oldStatus)
         .newStatus(newStatus)
         .reason(reason)
-        .changedBy("System") // In a real app, this would be the current user
+        .changedBy("SYSTEM") // This would come from security context in real implementation
         .build();
 
     orderStatusHistoryRepository.save(statusHistory);
   }
 
   private void updateOrderItemsStatus(EOrder order, OrderStatus orderStatus) {
-    // Map order status to item status
-    OrderItemStatus itemStatus = null;
-
-    switch (orderStatus) {
-      case PENDING:
-        itemStatus = OrderItemStatus.PENDING;
-        break;
-
-      case CONFIRMED:
-        itemStatus = OrderItemStatus.CONFIRMED;
-        break;
-
-      case PROCESSING:
-        itemStatus = OrderItemStatus.PROCESSING;
-        break;
-
-      case SHIPPED:
-        itemStatus = OrderItemStatus.SHIPPED;
-        break;
-
-      case DELIVERED:
-        itemStatus = OrderItemStatus.DELIVERED;
-        break;
-
-      case CANCELLED:
-        itemStatus = OrderItemStatus.CANCELLED;
-        break;
-
-      case REFUNDED:
-        itemStatus = OrderItemStatus.REFUNDED;
-        break;
-
-      default:
-        // No specific mapping for other statuses
-        return;
-    }
-
+    // Convert order status to appropriate item status
+    OrderItemStatus itemStatus = mapOrderStatusToItemStatus(orderStatus);
+    
     if (itemStatus != null) {
-      // Get all items for the order
-      List<EOrderItem> items = orderItemRepository.findAll().stream()
+      List<EOrderItem> orderItems = orderItemRepository.findAll().stream()
           .filter(item -> item.getOrder().getId().equals(order.getId()))
           .collect(Collectors.toList());
-
-      // Update item status
-      for (EOrderItem item : items) {
-        // Only update if current status is less advanced than new status
-        if (shouldUpdateItemStatus(item.getStatus(), itemStatus)) {
-          item.setStatus(itemStatus);
-          orderItemRepository.save(item);
-        }
-      }
+      
+      orderItems.forEach(item -> {
+        item.setStatus(itemStatus);
+        orderItemRepository.save(item);
+      });
     }
   }
 
-  private boolean shouldUpdateItemStatus(OrderItemStatus currentStatus, OrderItemStatus newStatus) {
-    // Define status progression (lower index = less advanced status)
-    List<OrderItemStatus> progression = List.of(
-        OrderItemStatus.PENDING,
-        OrderItemStatus.CONFIRMED,
-        OrderItemStatus.PROCESSING,
-        OrderItemStatus.SHIPPED,
-        OrderItemStatus.DELIVERED,
-        OrderItemStatus.REFUNDED,
-        OrderItemStatus.CANCELLED);
-
-    int currentIndex = progression.indexOf(currentStatus);
-    int newIndex = progression.indexOf(newStatus);
-
-    // If status is not in the progression, don't update
-    if (currentIndex == -1 || newIndex == -1) {
-      return false;
-    }
-
-    // Only update if new status is more advanced (higher index)
-    // Exception: CANCELLED always overrides current status
-    return newIndex > currentIndex || newStatus == OrderItemStatus.CANCELLED;
+  private OrderItemStatus mapOrderStatusToItemStatus(OrderStatus orderStatus) {
+    return switch (orderStatus) {
+      case PENDING -> OrderItemStatus.PENDING;
+      case CONFIRMED -> OrderItemStatus.CONFIRMED;
+      case PROCESSING -> OrderItemStatus.PROCESSING;
+      case SHIPPED -> OrderItemStatus.SHIPPED;
+      case DELIVERED -> OrderItemStatus.DELIVERED;
+      case CANCELLED -> OrderItemStatus.CANCELLED;
+      default -> null;
+    };
   }
 
   /**

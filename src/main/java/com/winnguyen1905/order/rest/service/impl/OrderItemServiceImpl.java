@@ -127,18 +127,8 @@ public class OrderItemServiceImpl implements OrderItemService {
         EOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
         
-        // Create order item entity
-        EOrderItem orderItem = EOrderItem.builder()
-                .order(order)
-                .productId(request.getProductId())
-                .vendorId(request.getVendorId())
-                .productName(request.getProductName())
-                .productSku(request.getSku())
-                .quantity(request.getQuantity())
-                .unitPrice(request.getUnitPrice())
-                .totalPrice(request.getUnitPrice() * request.getQuantity())
-                .status(OrderItemStatus.PENDING)
-                .build();
+        // Create order item entity using mapper
+        EOrderItem orderItem = orderMapper.toOrderItemEntity(request, order);
         
         // Save order item
         orderItem = orderItemRepository.save(orderItem);
