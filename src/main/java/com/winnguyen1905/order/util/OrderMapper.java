@@ -12,16 +12,17 @@ import com.winnguyen1905.order.common.constant.DiscountType;
 import com.winnguyen1905.order.common.constant.OrderItemStatus;
 import com.winnguyen1905.order.common.constant.OrderStatus;
 import com.winnguyen1905.order.common.constant.VendorOrderStatus;
-import com.winnguyen1905.order.model.CreateDiscountRequest;
-import com.winnguyen1905.order.model.CreateExternalRefRequest;
-import com.winnguyen1905.order.model.CreateOrderRequest;
-import com.winnguyen1905.order.model.CreateVendorOrderRequest;
-import com.winnguyen1905.order.model.OrderDiscountResponse;
-import com.winnguyen1905.order.model.OrderExternalRefResponse;
-import com.winnguyen1905.order.model.OrderItemResponse;
-import com.winnguyen1905.order.model.OrderResponse;
-import com.winnguyen1905.order.model.OrderStatusHistoryResponse;
-import com.winnguyen1905.order.model.VendorOrderResponse;
+import com.winnguyen1905.order.model.request.CreateDiscountRequest;
+import com.winnguyen1905.order.model.request.CreateExternalRefRequest;
+import com.winnguyen1905.order.model.request.CreateOrderItemRequest;
+import com.winnguyen1905.order.model.request.CreateOrderRequest;
+import com.winnguyen1905.order.model.request.CreateVendorOrderRequest;
+import com.winnguyen1905.order.model.response.OrderDiscountResponse;
+import com.winnguyen1905.order.model.response.OrderExternalRefResponse;
+import com.winnguyen1905.order.model.response.OrderItemResponse;
+import com.winnguyen1905.order.model.response.OrderResponse;
+import com.winnguyen1905.order.model.response.OrderStatusHistoryResponse;
+import com.winnguyen1905.order.model.response.VendorOrderResponse;
 import com.winnguyen1905.order.persistance.entity.EOrder;
 import com.winnguyen1905.order.persistance.entity.EOrderDiscount;
 import com.winnguyen1905.order.persistance.entity.EOrderExternalRef;
@@ -48,7 +49,31 @@ public class OrderMapper {
                 .build();
     }
     
-    public EOrderItem toOrderItemEntity(CreateOrderRequest.OrderItemRequest request, EOrder order) {
+    public EOrderItem toOrderItemEntity(CreateOrderRequest.Item item, EOrder order, UUID shopId) {
+        // Since CreateOrderRequest.Item doesn't have unitPrice, productName, etc., 
+        // these would need to be fetched from a product service in a real application
+        // For now, we'll use default values
+        double unitPrice = 0.0; // Would be fetched from product service
+        double totalPrice = item.getQuantity() * unitPrice;
+        
+        return EOrderItem.builder()
+                .order(order)
+                .productId(item.getProductId() != null ? item.getProductId().hashCode() : 0L) // Convert UUID to Long
+                .vendorId(shopId != null ? shopId.hashCode() : 0L) // Use shopId as vendorId
+                .productName("Product Name") // Would be fetched from product service
+                .productSku(item.getProductSku())
+                .productCategory("Category") // Would be fetched from product service
+                .quantity(item.getQuantity())
+                .unitPrice(unitPrice)
+                .totalPrice(totalPrice)
+                .weight(item.getWeight())
+                .dimensions(item.getDimensions())
+                .taxCategory(item.getTaxCategory())
+                .status(OrderItemStatus.PENDING)
+                .build();
+    }
+    
+    public EOrderItem toOrderItemEntity(CreateOrderItemRequest request, EOrder order) {
         double totalPrice = request.getQuantity() * request.getUnitPrice();
         
         return EOrderItem.builder()
@@ -56,7 +81,7 @@ public class OrderMapper {
                 .productId(request.getProductId())
                 .vendorId(request.getVendorId())
                 .productName(request.getProductName())
-                .productSku(request.getProductSku())
+                .productSku(request.getSku())
                 .productCategory(request.getProductCategory())
                 .quantity(request.getQuantity())
                 .unitPrice(request.getUnitPrice())
@@ -113,6 +138,8 @@ public class OrderMapper {
                 .taxAmount(order.getTaxAmount())
                 .shippingAmount(order.getShippingAmount())
                 .totalAmount(order.getTotalAmount())
+                .paidAmount(order.getPaidAmount())
+                .amountToBePaid(order.getAmountToBePaid())
                 .status(order.getStatus())
                 .shippingAddress(order.getShippingAddress())
                 .billingAddress(order.getBillingAddress())

@@ -1,5 +1,6 @@
 package com.winnguyen1905.order.rest.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +88,34 @@ public interface OrderService {
      * @param id Order ID
      */
     void deleteOrder(UUID id);
+
+    // Payment-related methods
+
+    /**
+     * Update order payment amounts
+     * 
+     * @param orderId Order ID
+     * @param paidAmount Amount that has been paid
+     * @param amountToBePaid Amount remaining to be paid
+     */
+    void updateOrderPaymentAmounts(UUID orderId, BigDecimal paidAmount, BigDecimal amountToBePaid);
+
+    /**
+     * Mark order as paid
+     * Sets paidAmount to the specified amount and amountToBePaid to 0
+     * 
+     * @param orderId Order ID
+     * @param paidAmount Amount that was paid
+     */
+    void markOrderAsPaid(UUID orderId, BigDecimal paidAmount);
+
+    /**
+     * Mark order as unpaid
+     * Sets paidAmount to 0 and amountToBePaid to totalAmount
+     * 
+     * @param orderId Order ID
+     */
+    void markOrderAsUnpaid(UUID orderId);
     
     /**
      * Get orders that contain products from a specific vendor
