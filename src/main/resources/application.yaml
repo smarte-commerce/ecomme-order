@@ -1,4 +1,3 @@
-
 server:
   port: 8090
   error:
@@ -28,6 +27,16 @@ spring:
           max-attempts: 5 # Maximum number of retry attempts
         acknowledge-mode: auto # Auto acknowledgment of messages
 
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      enable-idempotence: true
+
   servlet:
     multipart:
       max-file-size: 50MB
@@ -40,6 +49,13 @@ spring:
     username: root
     password: ""
     driver-class-name: org.postgresql.Driver
+    # Add connection pool configuration
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 600000
+      connection-timeout: 30000
+      max-lifetime: 1800000
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
@@ -80,3 +96,22 @@ jwt:
   base64-secret: hl4gDqBxBgOSDWqBlvwFYQInjYRGAdS4lUT7Nf3Zk1nItoSQ9wSFDPU+kXHKcKUW/UKbpGv9bCsa9S/QsoFRHw==
   access_token-validity-in-seconds: 90000000
   refresh_token-validity-in-seconds: 100000000
+
+# SpringDoc/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    disable-swagger-default-url: true
+  show-actuator: true
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+
+# Kafka Topics Configuration
+topic:
+  name:
+    order:
+      created: order-created

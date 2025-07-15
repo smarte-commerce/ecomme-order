@@ -16,6 +16,8 @@ CREATE TABLE orders (
     tax_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     shipping_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    paid_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    amount_to_be_paid DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     status ENUM('draft', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded') DEFAULT 'draft',
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
