@@ -25,6 +25,8 @@ public class OrderResponse {
     private Double taxAmount;
     private Double shippingAmount;
     private Double totalAmount;
+    private Double paidAmount;
+    private Double amountToBePaid;
     private OrderStatus status;
     private String shippingAddress;
     private String billingAddress;
